@@ -18,6 +18,9 @@
     :bucket "s3-beam-test" 
     :aws-zone "s3-eu-west-1")) ;; remove on next reset
 
+(defn uuid []
+  (str (java.util.UUID/randomUUID)))
+
 (defroutes routes
   (resources "/")
   (GET "/sign" {params :query-params}
@@ -25,6 +28,7 @@
      :body (pr-str (s3b/sign-upload
                      (rename-keys params {"file-name" :file-name
                                           "mime-type" :mime-type})
-                     aws-config))}))
+                     aws-config
+                     {:key-fn (fn [_] (uuid))}))}))
 
 (def handler (wrap-params routes))
