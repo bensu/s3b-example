@@ -1,4 +1,4 @@
-(defproject example "0.1.0-SNAPSHOT"
+(defproject sb3-example "0.1.0-SNAPSHOT"
   :description "FIXME: write this!"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -8,24 +8,29 @@
                  [org.clojure/clojurescript "0.0-3211"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [org.clojure/data.json "0.2.5"]
+                 [environ "1.0.0"]
+                 [ring "1.3.2"]
+                 [compojure "1.3.1"]
                  [sablono "0.3.4"]
                  [org.omcljs/om "0.8.8"]
                  [prismatic/om-tools "0.3.11" :exclusions [om]]]
 
   :plugins [[lein-cljsbuild "1.0.5"]
+            [lein-environ "1.0.0"]
             [lein-figwheel "0.3.1"]]
 
-  :source-paths ["src" "../s3_beam/src"]
+  :source-paths ["src/clj" "../s3_beam/src/clj"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
-  
-  :figwheel {:css-dirs ["resources/public/css"]}
+
+  :figwheel {:css-dirs ["resources/public/css"]
+             :ring-handler example.server/handler}
 
   :cljsbuild
   {:builds [{:id "dev"
-             :source-paths ["src" "../s3_beam/src/cljs"]
+             :source-paths ["src/cljs" "../s3_beam/src/cljs"]
 
-             :figwheel { :on-jsload "example.core/on-js-reload" }
+             :figwheel {:on-jsload "example.core/on-js-reload"}
 
              :compiler {:main example.core
                         :asset-path "js/compiled/out"

@@ -51,7 +51,7 @@
   (will-mount [_]
     (go-loop []
       (let [fs (<! (om/get-state owner :uploaded))]
-        (.log js/console fs))
+        (js/alert (str "The file " fs " was succesfully uploaded")))
       (recur)))
   (render-state [_ {:keys [upload-queue]}]
     (dom/div
