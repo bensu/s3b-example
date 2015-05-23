@@ -1,2 +1,15 @@
 /* some style */
 
+.drop-area {
+    border: 2px dashed #bbb;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+    padding: 50px;
+    text-align: center;
+    font: 21pt bold arial;
+    color: #bbb;
+}
+
+.dragging {
+    background: blue;
+}
