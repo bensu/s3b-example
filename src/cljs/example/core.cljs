@@ -4,7 +4,7 @@
               [om.core :as om :include-macros true]
               [om-tools.dom :as dom]
               [om-tools.core :refer-macros [defcomponent]]
-              [s3-beam.client :refer [s3-pipe]]))
+              [s3-beam.client :refer [s3-pipe s3-download-pipe]]))
 
 (enable-console-print!)
 
@@ -41,21 +41,41 @@
 
 (defonce app-state (atom {:text "File Uploader"}))
 
+(defn file-icon [file owner {:keys [ch]}]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/div nil
+        (dom/li nil (.-name (:file file)))
+        (dom/button #js {:onClick (fn [_] (put! ch (:file file)))} "Download")))))
+
 (defcomponent main [data owner]
   (init-state [_]
-    (let [uploaded (chan)]
+    (let [uploaded (chan)
+          download (chan)]
       {:dropped-queue (chan)
        :upload-queue (s3-pipe uploaded) 
+       :download download
+       :download-queue (s3-download-pipe download)
        :uploaded uploaded
+       :uploaded-files []
        :hoover? false}))
   (will-mount [_]
     (go-loop []
-      (let [fs (<! (om/get-state owner :uploaded))]
-        (js/alert (str "The file " (.-name (:file fs)) " was succesfully uploaded")))
+      (let [f (<! (om/get-state owner :uploaded))]
+        (js/alert (str "The file " (.-name (:file f)) " was succesfully uploaded"))
+        (om/update-state! owner :uploaded-files #(conj % f)))
+      (recur))
+    (go-loop []
+      (let [res (<! (om/get-state owner :download))]
+        (.log js/console res))
       (recur)))
-  (render-state [_ {:keys [upload-queue]}]
+  (render-state [_ {:keys [upload-queue download-queue]}]
     (dom/div
       (dom/h1 (:text data))
+      (apply dom/ul nil
+        (map #(om/build file-icon % {:opts {:ch download-queue}})
+          (om/get-state owner :uploaded-files)))
       (om/build drop-area {} {:opts {:ch upload-queue}}))))
 
 (om/root main app-state {:target (. js/document (getElementById "app"))})
