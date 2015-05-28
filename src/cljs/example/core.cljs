@@ -41,13 +41,19 @@
 
 (defonce app-state (atom {:text "File Uploader"}))
 
+(def signed-url "https://s3-beam-test.s3-eu-west-1.amazonaws.com/bddf0bb8-db04-4ed9-b032-5bb9b0e37de1?Signature=pAz%2BJFAUQTgN84Ru0ZbWIco3f6o%3D&AWSAccessKeyId=AKIAI7WJ6AVM37RFJMZQ&Expires=1432895218")
+
 (defn file-icon [file owner {:keys [ch]}]
   (reify
     om/IRender
     (render [_]
       (dom/div nil
-        (dom/li nil (.-name (:file file)))
-        (dom/button #js {:onClick (fn [_] (put! ch (:file file)))} "Download")))))
+        (let [file-name (.-name (:file file))]
+          ;; FIX get the real file name to display
+          (dom/a {:href (str (:location (:response file)))
+                  :download file-name 
+                  :target "_blank"} 
+            file-name))))))
 
 (defcomponent main [data owner]
   (init-state [_]

@@ -2,6 +2,7 @@
   (:require [clojure.set :refer [rename-keys]]
             [compojure.core :refer [GET defroutes]]
             [compojure.route :refer [resources]]
+            [aws.sdk.s3 :as s3]
             [environ.core :refer [env]]
             [ring.middleware.params :refer [wrap-params]]
             [s3-beam.handler :as s3b]))
@@ -18,11 +19,31 @@
     :bucket "s3-beam-test" 
     :aws-zone "s3-eu-west-1")) ;; remove on next reset
 
+(defn signed-url [aws-config key]
+  {:pre [(string? key)]}
+  (let [cred {:access-key (:aws-access-key aws-config) 
+              :secret-key (:aws-secret-key aws-config)
+              :endpoint (str (:aws-zone aws-config) ".amazonaws.com")}]
+    (s3/generate-presigned-url cred (:bucket aws-config) key)))
+
+(def cred {:access-key (:aws-access-key aws-config) 
+           :secret-key (:aws-secret-key aws-config)
+           :endpoint (str (:aws-zone aws-config) ".amazonaws.com")})
+
 (defn uuid []
   (str (java.util.UUID/randomUUID)))
 
 (defroutes routes
   (resources "/")
+  (GET "/sign-download/:k" [k] 
+    (try
+      (println k)
+      {:status 200
+       :body (signed-url aws-config k)}
+      (catch Exception e
+        (println e)
+        {:status 500
+         :body (pr-str e)})))
   (GET "/sign" {params :query-params}
     {:status 200
      :body (pr-str (s3b/sign-upload
@@ -32,3 +53,13 @@
                      {:key-fn (fn [_] (uuid))}))}))
 
 (def handler (wrap-params routes))
+
+(defn fake-request [uri]
+  (let [localhost "127.0.0.1"]
+    (handler {:server-port 80
+              :server-name localhost
+              :remote-addr localhost
+              :uri uri
+              :scheme :http
+              :headers {} 
+              :request-method :get})))

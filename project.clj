@@ -13,6 +13,7 @@
                  [compojure "1.3.1"]
                  [sablono "0.3.4"]
                  [org.omcljs/om "0.8.8"]
+                 [clj-aws-s3 "0.3.10"]
                  [prismatic/om-tools "0.3.11" :exclusions [om]]]
 
   :plugins [[lein-cljsbuild "1.0.5"]
