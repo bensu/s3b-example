@@ -18,14 +18,16 @@
 
   :plugins [[lein-cljsbuild "1.0.5"]
             [lein-environ "1.0.0"]
+            [lein-ring "0.9.4"]
             [lein-figwheel "0.3.1"]]
 
   :source-paths ["src/clj" "../s3_beam/src/clj"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
-  :figwheel {:css-dirs ["resources/public/css"]
-             :ring-handler example.server/handler}
+  :figwheel {:css-dirs ["resources/public/css"]}
+  
+  :ring {:handler example.server/handler}
 
   :cljsbuild
   {:builds [{:id "dev"

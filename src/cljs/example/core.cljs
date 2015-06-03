@@ -50,9 +50,9 @@
       (dom/div nil
         (let [file-name (.-name (:file file))]
           ;; FIX get the real file name to display
-          (dom/a {:href (str (:location (:response file)))
-                  :download file-name 
-                  :target "_blank"} 
+          (dom/div {:on-click (fn [_]
+                                (println (:key (:response file)))
+                                (go (>! ch (:key (:response file)))))} 
             file-name))))))
 
 (defcomponent main [data owner]
