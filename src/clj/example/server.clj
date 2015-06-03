@@ -19,12 +19,13 @@
     :bucket "s3-beam-test" 
     :aws-zone "s3-eu-west-1")) ;; remove on next reset
 
-(defn signed-url [aws-config key]
-  {:pre [(string? key)]}
+(defn signed-url [aws-config key file-name]
+  {:pre [(string? key) (string? file-name)]}
   (let [cred {:access-key (:aws-access-key aws-config) 
               :secret-key (:aws-secret-key aws-config)
               :endpoint (str (:aws-zone aws-config) ".amazonaws.com")}]
-    (s3/generate-presigned-url cred (:bucket aws-config) key)))
+    (s3/generate-presigned-url cred (:bucket aws-config) key
+      {:content-disposition (str "attachment; filename=" file-name)})))
 
 (def cred {:access-key (:aws-access-key aws-config) 
            :secret-key (:aws-secret-key aws-config)
@@ -35,11 +36,11 @@
 
 (defroutes routes
   (resources "/")
-  (GET "/sign-download/:k" [k] 
+  (GET "/sign-download/:k/:f" [k f] 
     (try
       (println k)
       {:status 200
-       :body (signed-url aws-config k)}
+       :body (signed-url aws-config k f)}
       (catch Exception e
         (println e)
         {:status 500

@@ -52,7 +52,8 @@
         (let [file-name (.-name (:file file))]
           ;; FIX get the real file name to display
           (dom/div {:on-click (fn [_]
-                                (go (>! ch (:key (:response file)))))} 
+                                (go (>! ch (assoc (:response file)
+                                             :file-name file-name))))} 
             file-name))))))
 
 (defcomponent main [data owner]
@@ -80,13 +81,15 @@
       (let [f (<! (om/get-state owner :download-queue))
             ch (chan)]
         (go (let [url (<! ch)]
-              (om/update! data :link url)))
+              (om/update! data :link {:url url
+                                      :file-name (:file-name f)})))
+        (println f)
         (s3/sign-download f ch))
       (recur)))
   (render-state [_ {:keys [upload-queue download-queue]}]
     (dom/div
       (dom/h1 (:text data))
-      (dom/a {:href (:link data)} (:link data))
+      (dom/a {:href (:url (:link data))} (:file-name (:link data)))
       (apply dom/ul nil
         (map #(om/build file-icon % {:opts {:ch download-queue}})
           (om/get-state owner :uploaded-files)))
