@@ -13,7 +13,8 @@
                  [compojure "1.3.1"]
                  [sablono "0.3.4"]
                  [org.omcljs/om "0.8.8"]
-                 [clj-aws-s3 "0.3.10"]
+                 [com.amazonaws/aws-java-sdk "1.7.5"]
+                 [clj-time "0.6.0"]
                  [prismatic/om-tools "0.3.11" :exclusions [om]]]
 
   :plugins [[lein-cljsbuild "1.0.5"]
@@ -21,7 +22,7 @@
             [lein-ring "0.9.4"]
             [lein-figwheel "0.3.1"]]
 
-  :source-paths ["src/clj" "../s3_beam/src/clj"]
+  :source-paths ["src/clj" "../clj_aws_s3/src/clj" "../s3_beam/src/clj"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
