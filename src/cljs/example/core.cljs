@@ -4,7 +4,7 @@
               [om.core :as om :include-macros true]
               [om-tools.dom :as dom]
               [om-tools.core :refer-macros [defcomponent]]
-              [s3-beam.client :as s3 :refer [s3-pipe s3-download-pipe]]))
+              [s3-beam.client :as s3]))
 
 (enable-console-print!)
 
@@ -39,57 +39,37 @@
                          (handle-drop ch e))}
       (om/build file-input {} {:opts {:ch ch}}))))
 
-(defonce app-state (atom {:text "File Uploader"
-                          :link nil}))
+(defonce app-state (atom {:text "File Uploader"}))
 
-(def signed-url "https://s3-beam-test.s3-eu-west-1.amazonaws.com/bddf0bb8-db04-4ed9-b032-5bb9b0e37de1?Signature=pAz%2BJFAUQTgN84Ru0ZbWIco3f6o%3D&AWSAccessKeyId=AKIAI7WJ6AVM37RFJMZQ&Expires=1432895218")
-
-(defn file-icon [file owner {:keys [ch]}]
+(defn file-icon [file owner]
   (reify
     om/IRender
     (render [_]
       (dom/div nil
         (let [file-name (.-name (:file file))]
-          ;; FIX get the real file name to display
           (dom/div {:on-click (fn [_]
-                                (go (>! ch (assoc (:response file)
-                                             :file-name file-name))))} 
+                                (s3/download-file (assoc (:response file)
+                                                    :file-name file-name)))} 
             file-name))))))
 
 (defcomponent main [data owner]
   (init-state [_]
     (let [uploaded (chan)
           download (chan)]
-      {:dropped-queue (chan)
-       :upload-queue (s3-pipe uploaded) 
-       :download download
-       :download-queue (chan) 
+      {:upload-queue (s3/s3-pipe uploaded) 
        :uploaded uploaded
        :uploaded-files []
        :hoover? false}))
   (will-mount [_]
     (go-loop []
       (let [f (<! (om/get-state owner :uploaded))]
-        (js/alert (str "The file " (.-name (:file f)) " was succesfully uploaded"))
+        (js/alert (str "The file " (.-name (:file f))
+                    " was succesfully uploaded"))
         (om/update-state! owner :uploaded-files #(conj % f)))
-      (recur))
-    (go-loop []
-      (let [res (<! (om/get-state owner :download))]
-        (.log js/console res))
-      (recur))
-    (go-loop []
-      (let [f (<! (om/get-state owner :download-queue))
-            ch (chan)]
-        (go (let [url (<! ch)]
-              (om/update! data :link {:url url
-                                      :file-name (:file-name f)})))
-        (println f)
-        (s3/sign-download f ch))
       (recur)))
   (render-state [_ {:keys [upload-queue download-queue]}]
     (dom/div
       (dom/h1 (:text data))
-      (dom/a {:href (:url (:link data))} (:file-name (:link data)))
       (apply dom/ul nil
         (map #(om/build file-icon % {:opts {:ch download-queue}})
           (om/get-state owner :uploaded-files)))

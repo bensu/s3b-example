@@ -4,6 +4,7 @@
             [compojure.route :refer [resources]]
             [aws.sdk.s3 :as s3]
             [environ.core :refer [env]]
+            [ring.util.response :as response]
             [ring.middleware.params :refer [wrap-params]]
             [s3-beam.handler :as s3b]))
 
@@ -35,14 +36,13 @@
   (str (java.util.UUID/randomUUID)))
 
 (defroutes routes
+  (GET "/" req (response/file-response "resources/public/index.html"))
   (resources "/")
   (GET "/sign-download/:k/:f" [k f] 
     (try
-      (println k)
       {:status 200
        :body (signed-url aws-config k f)}
       (catch Exception e
-        (println e)
         {:status 500
          :body (pr-str e)})))
   (GET "/sign" {params :query-params}
